@@ -6,6 +6,7 @@ import json
 import codecs
 import random
 from snownlp import SnowNLP
+from hanziconv import HanziConv
 
 #use Tr sentence extract
 target_host = "140.116.245.151"
@@ -47,11 +48,17 @@ def seg(sentence):
     return WSResult
 
 def nlp(Question):
+    Question = HanziConv.toSimplified(Question)
     text = ""
   #file extract from CTBC.json
     with codecs.open('OP.json', 'r', 'utf-8') as file:
-        file.text = file.read()
-    fileDictionary = json.loads(file.text)
+        file = file.read()
+    fileDictionary = json.loads(file)
+    
+    
+    with codecs.open('OP.json', 'r', 'utf-8') as file2:
+        file1 = file2.read()
+    oqfileDictionary = json.loads(file1)
 
     if ('!問題' in Question or '！問題' in Question):
         t1 = ''
@@ -75,11 +82,13 @@ def nlp(Question):
         extractQuestion.append(segQuestion[i][0])
     
     #get targetList
+    oqlist = []
     targetList=[]
     targetQuestionList=[]
     targetAnswerList=[]
     keywordQuestion = []
     nameQuestion = []
+    
     for i in range(0, len(segQuestion)):
         if ('VC' in segQuestion[i] or 'VCL' in segQuestion[i] or 'Vk' in segQuestion[i] or 'Na' in segQuestion[i] or 'VG' in segQuestion[i] or 'Nb' in segQuestion[i] or 'Nv' in segQuestion[i] or 'Na' in segQuestion[i]  or 'PARENTHESISCATEGORY' in segQuestion[i]):  
             keywordQuestion.append(segQuestion[i][0])
@@ -91,9 +100,49 @@ def nlp(Question):
     #find key sentence in data
     for i in range(0, len(fileDictionary)):
         keyw = 0
+        
         tmp = fileDictionary[i]['question']
+        oq = oqfileDictionary[i]['question']
         ttmp = fileDictionary[i]['answer']
-        for j in range(0, len(tmp)): 
+        
+ 
+        for jj in range(0, len(tmp)):
+            if ('?' in tmp):
+                tmp.remove('?')
+            elif ('，' in tmp):
+                tmp.remove('，')
+            elif ('「' in tmp):
+                tmp.remove('「')    
+            elif ('」' in tmp):
+                tmp.remove('」')
+            elif ('《' in tmp):
+                tmp.remove('《')
+            elif ('》' in tmp):
+                tmp.remove('》')
+            elif ('》' in tmp):
+                tmp.remove('》')
+            elif ('的' in tmp):
+                tmp.remove('的')
+            elif ('‧' in tmp):
+                tmp.remove('‧')
+            elif ('那' in tmp):
+                tmp.remove('那')
+            elif ('個' in tmp):
+                tmp.remove('個')
+            elif ('吗' in tmp):
+                tmp.remove('吗')
+            elif ('呢' in tmp):
+                tmp.remove('呢')
+                
+        #print(oq)
+        
+        #for j in range(0, len(tmp)): 
+        oqlist.append(oq)
+        targetList.append(tmp)
+        targetAnswerList.append(ttmp)
+        
+        
+        '''
             if (keyw == 1):
                 break
             try:
@@ -106,17 +155,23 @@ def nlp(Question):
             except:
                 text = '輸入錯誤！ 請重新輸入問題！'
                 return text
-    #print(targetList)
+                '''
+    #print(len(oqlist))
+    #print(len(targetList))
     n = len(targetList)
     i = 0
     for ii in range(0, n):
         if i > n:
             break
+        optmp = ''
         tmp = ''
         #print(targetList)
         #print('')
         for j in range(0, len(targetList[i])):
             tmp = tmp + targetList[i][j]
+        for j in range(0, len(oqlist[i])):  
+            optmp = optmp + oqlist[i][j]
+            '''
         if len(nameQuestion) > 0:
             for k in range(0, len(nameQuestion)):
                 if nameQuestion[k] in targetList[i]:
@@ -130,7 +185,8 @@ def nlp(Question):
                     i = i - 1
                     break
         else:
-            targetQuestionList.append(tmp)
+            '''
+        targetQuestionList.append(optmp)
         i = i + 1
         
 
@@ -146,15 +202,18 @@ def nlp(Question):
     
     #print(targetSnowNLP.tf)
     #print(targetQuestionList)
+    
+    #print(extractQuestion)
+    #print('')
     #print(targetList)
     #print('')
-    #print(extractQuestion)
+    
     #print(TargetSim)
 
     if (max(TargetSim) != 0):
         score = max(TargetSim)
-        if max(TargetSim) < 0:
-            score = -max(TargetSim)
+        #if max(TargetSim) < 0:
+        #    score = -max(TargetSim)
             #text = '本次搜尋分數: ' + str(score) + '\n' + '\n' + '搜尋對應問題： \n' + targetQuestionList[TargetSim.index(min(TargetSim))] + '\n' + '\n' + '搜尋對應回答： \n' + targetAnswerList[TargetSim.index(min(TargetSim))]
             #text = targetQuestionList[TargetSim.index(max(TargetSim))]
             #return text
@@ -162,8 +221,8 @@ def nlp(Question):
         #text = targetQuestionList[TargetSim.index(max(TargetSim))]
     else:
         text = '本次搜尋分數: ' + str(max(TargetSim)) + '\n' + '\n' + '搜尋不到相對應的結果！ 請重新輸入問題！'
-    return text
-
+    return HanziConv.toTraditional(text)
+print(nlp('鲁夫是属于天然橡胶吗?或者是合成橡胶?'))
 
 '''
 correct = 0
@@ -187,7 +246,7 @@ for i in range(0, len(fileDictionary)):
     for j in range(0, len(t)):
         tmp = tmp + t[j]
     #print(tmp)
-    #print(str(i) + t1)
+    #print(t1)
     if (nlp(t1) == tmp):
         correct = correct + 1
     else:
