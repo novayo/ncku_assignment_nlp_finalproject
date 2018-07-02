@@ -48,7 +48,7 @@ def seg(sentence):
     return WSResult
 
 def nlp(Question):
-    Question = HanziConv.toSimplified(Question)
+    #Question = HanziConv.toSimplified(Question)
     text = ""
   #file extract from CTBC.json
     with codecs.open('OP.json', 'r', 'utf-8') as file:
@@ -69,7 +69,7 @@ def nlp(Question):
           for k in range(0, len(tmp)):
             ttmp = ttmp + tmp[k]
           t1 = t1 + str(i+1) + '. ' + ttmp + '\n'
-        return t1           
+        return  HanziConv.toTraditional(t1)          
             
         
     if ('?' not in Question and '？' not in Question):
@@ -79,7 +79,7 @@ def nlp(Question):
     segQuestion = seg(Question) #段詞系統
     extractQuestion = []
     for i in range(0, len(segQuestion)):
-        extractQuestion.append(segQuestion[i][0])
+        extractQuestion.append(HanziConv.toSimplified(segQuestion[i][0]))
     
     #get targetList
     oqlist = []
@@ -99,8 +99,6 @@ def nlp(Question):
 
     #find key sentence in data
     for i in range(0, len(fileDictionary)):
-        keyw = 0
-        
         tmp = fileDictionary[i]['question']
         oq = oqfileDictionary[i]['question']
         ttmp = fileDictionary[i]['answer']
@@ -202,7 +200,7 @@ def nlp(Question):
     
     #print(targetSnowNLP.tf)
     #print(targetQuestionList)
-    
+    #print(segQuestion)
     #print(extractQuestion)
     #print('')
     #print(targetList)
@@ -210,7 +208,12 @@ def nlp(Question):
     
     #print(TargetSim)
 
-    if (max(TargetSim) != 0):
+    #rt = ''
+    #for i in range(0, len(TargetSim)):
+    #    if TargetSim[i] > 0:
+    #        rt = rt + targetQuestionList[TargetSim.index(TargetSim[i])] + '\n\n'
+            
+    if (max(TargetSim) > 5):
         score = max(TargetSim)
         #if max(TargetSim) < 0:
         #    score = -max(TargetSim)
@@ -222,7 +225,7 @@ def nlp(Question):
     else:
         text = '本次搜尋分數: ' + str(max(TargetSim)) + '\n' + '\n' + '搜尋不到相對應的結果！ 請重新輸入問題！'
     return HanziConv.toTraditional(text)
-print(nlp('鲁夫是属于天然橡胶吗?或者是合成橡胶?'))
+print(nlp('!問題'))
 
 '''
 correct = 0
@@ -237,7 +240,35 @@ with codecs.open('OP.json', 'r', 'utf-8') as file:
     file.text = file.read()
     OPfileDictionary = json.loads(file.text)
 
+pos = 0
+zero = 0
+neg = 0
+scorelist = []
+#len(fileDictionary)
+for i in range(0, len(fileDictionary)):
+    t = OPfileDictionary[i]['question']
+    tmp = ''
+    for j in range(0, len(t)):
+        tmp = tmp + t[j]
+    #print(tmp)
+    #print(t1)
+    scorelist.append(nlp(tmp))
+    if (nlp(tmp) > 0):
+        pos = pos + 1
+    elif (nlp(tmp) == 0):
+        zero = zero + 1
+    elif (nlp(tmp) < 0):
+        neg = neg + 1
+        
+print('pos = ' + str(pos))
+print('zero = ' + str(zero))
+print('neg = ' + str(neg))
+print('')
+print(min(scorelist))
 
+'''
+
+'''
 #len(fileDictionary)
 for i in range(0, len(fileDictionary)):
     t1 = fileDictionary[i]['question']
@@ -264,29 +295,3 @@ print('\n\n')
 for i in range(0, len(error_search)):
     print(str(i+1) + '.' + error_search[i])    
 '''
-#print(nlp('自己第一次創作劇場版《ONE PIECE FILM STRONG WORLD》的感覺如何?')) #2.22e-16(max)
-#print(nlp('一邊要創作劇場版要一邊進行極其嚴格的週刊連載，不是很不妙嗎?'))    #3.997(max)
-#print(nlp('請問有什麼訣竅不會讓讀者感到膩味嗎?'))  #-3.8648594809738257(min)
-#print(nlp('當初為什麼會畫海賊呢，是受了什麼作品的影響嗎?')) #22.333453995342428(max)
-#print(nlp('請問偉大的航路會發生什麼事?會有船在天空中飛行嗎?')) #18.215966764501744(max)
-#print(nlp('連載前情節都已經想好了嗎?')) #-3.8291114794674774(min)
-#print(nlp('最後的結局已經決定了嗎?')) #-7.785188041541693(min)
-#print(nlp('既然決定好了結局，到結局之前還可以有很長的時間來考慮呢?')) #-8.20839784078579(max)
-#print(nlp('每個人物的情節都引起了讀者的共鳴，《ONE PIECE》是否覺得令人催淚呢?')) #33.696611101608006(max)
-#print(nlp('描繪時自己有哭過嗎?')) #-8.788898309344875(max)
-#print(nlp('有沒有絕對不描寫哪些事物的的規則嗎?')) #13.02640285135044(max)
-#print(nlp('是在17歲獲得手塚獎後開始想要成為漫畫家的嗎?')) #15.9537503391368(max)
-#print(nlp('獲得手塚獎時認為已經能行了嗎?')) #11.97208383944055(max)
-#print(nlp('有過放棄當漫畫家的念頭嗎?')) #2.823443040935489(max)
-#print(nlp('從事漫畫家這份工作高興嗎?')) #8.283158043246326(max)
-#print(nlp(''))
-#print(nlp(''))
-#print(nlp(''))
-#print(nlp(''))
-#print(nlp(''))
-
-
-
-
-
-
