@@ -13,7 +13,7 @@ import json
 import codecs
 from hanziconv import HanziConv
 
-with codecs.open('New.json', 'r', 'utf-8') as file:
+with codecs.open('OP (tran).json', 'r', 'utf-8') as file:
     file.text = file.read()
     fileDictionary = json.loads(file.text)
     
