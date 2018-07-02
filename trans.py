@@ -13,14 +13,16 @@ import json
 import codecs
 from hanziconv import HanziConv
 
-with codecs.open('OP (tran).json', 'r', 'utf-8') as file:
+with codecs.open('OP-tran.json', 'r', 'utf-8') as file:
     file.text = file.read()
     fileDictionary = json.loads(file.text)
     
 json_data = []
 for i in range(0, len(fileDictionary)):
     tmp = fileDictionary[i]['question']
-    s = HanziConv.toSimplified(tmp)
+    s = []
+    for j in range(0, len(tmp)):
+        s.append(HanziConv.toSimplified(tmp[j]))
     
     data = {}
     data['question'] = s
