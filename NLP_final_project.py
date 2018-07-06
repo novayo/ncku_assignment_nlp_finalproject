@@ -2,11 +2,6 @@ from collections import OrderedDict
 from multiprocessing import Pool
 import socket
 import time
-import json
-import codecs
-import random
-from snownlp import SnowNLP
-from hanziconv import HanziConv
 
 #use Tr sentence extract
 target_host = "140.116.245.151"
@@ -47,28 +42,36 @@ def seg(sentence):
 
     return WSResult
 
+
+
+
+
+import json
+import codecs
+import random
+from snownlp import SnowNLP
+from hanziconv import HanziConv
 def nlp(Question):
-    #Question = HanziConv.toSimplified(Question)
     text = ""
-  #file extract from CTBC.json
-    with codecs.open('OP.json', 'r', 'utf-8') as file:
+    #file extract from CTBC.json
+    with codecs.open('OP (Simple).json', 'r', 'utf-8') as file:
         file = file.read()
     fileDictionary = json.loads(file)
     
-    with codecs.open('OP.json', 'r', 'utf-8') as file2:
+    with codecs.open('OP (Traditional).json', 'r', 'utf-8') as file2:
         file1 = file2.read()
     oqfileDictionary = json.loads(file1)
 
     if ('!問題' in Question or '！問題' in Question):
         t1 = ''
         for i in range(0, 5):
-          j = random.randint(0, len(fileDictionary))
-          tmp = fileDictionary[j]['question']
+          j = random.randint(0, len(oqfileDictionary))
+          tmp = oqfileDictionary[j]['question']
           ttmp = ''
           for k in range(0, len(tmp)):
             ttmp = ttmp + tmp[k]
           t1 = t1 + str(i+1) + '. ' + ttmp + '\n'
-        return  HanziConv.toTraditional(t1)          
+        return t1         
             
     if ('?' not in Question and '？' not in Question):
       return '請輸入問句！（記得加上問號）'
@@ -84,78 +87,48 @@ def nlp(Question):
     targetList=[]
     targetQuestionList=[]
     targetAnswerList=[]
-    keywordQuestion = []
-    nameQuestion = []
-    
-    for i in range(0, len(segQuestion)):
-        if ('VC' in segQuestion[i] or 'VCL' in segQuestion[i] or 'Vk' in segQuestion[i] or 'Na' in segQuestion[i] or 'VG' in segQuestion[i] or 'Nb' in segQuestion[i] or 'Nv' in segQuestion[i] or 'Na' in segQuestion[i]  or 'PARENTHESISCATEGORY' in segQuestion[i]):  
-            keywordQuestion.append(segQuestion[i][0])
-        if('Nb' in segQuestion[i]):
-            nameQuestion.append(segQuestion[i][0])
 
-    #find key sentence in data
+    f = open('pause.txt', 'r')
+    stopword = f.read()
+    stopwordlist = stopword.split('\n')
     for i in range(0, len(fileDictionary)):
         tmp = fileDictionary[i]['question']
         oq = oqfileDictionary[i]['question']
         ttmp = fileDictionary[i]['answer']
         
-        for jj in range(0, len(tmp)):
-            if ('?' in tmp):
-                tmp.remove('?')
-            elif ('，' in tmp):
-                tmp.remove('，')
-            elif ('「' in tmp):
-                tmp.remove('「')    
-            elif ('」' in tmp):
-                tmp.remove('」')
-            elif ('《' in tmp):
-                tmp.remove('《')
-            elif ('》' in tmp):
-                tmp.remove('》')
-            elif ('》' in tmp):
-                tmp.remove('》')
-            elif ('的' in tmp):
-                tmp.remove('的')
-            elif ('‧' in tmp):
-                tmp.remove('‧')
-            elif ('那' in tmp):
-                tmp.remove('那')
-            elif ('個' in tmp):
-                tmp.remove('個')
-            elif ('吗' in tmp):
-                tmp.remove('吗')
-            elif ('呢' in tmp):
-                tmp.remove('呢')
+        for j in range(0, len(stopwordlist)):
+            n = len(tmp)
+            k = 0
+            for kk in range(0, n):
+              if (k > n):
+                break
+              if (stopwordlist[j] in tmp):
+                tmp.remove(stopwordlist[j])
+                k = k - 1
+                n = n - 1
+              k = k + 1
+            if (stopwordlist[j] in extractQuestion):
+              extractQuestion.remove(stopwordlist[j])
         
-        #for j in range(0, len(tmp)): 
         oqlist.append(oq)
         targetList.append(tmp)
         targetAnswerList.append(ttmp)
-        
-    n = len(targetList)
-    i = 0
-    for ii in range(0, n):
-        if i > n:
-            break
+
+
+    for i in range(0, len(targetList)):
         optmp = ''
-        tmp = ''
-        for j in range(0, len(targetList[i])):
-            tmp = tmp + targetList[i][j]
         for j in range(0, len(oqlist[i])):  
             optmp = optmp + oqlist[i][j]
         targetQuestionList.append(optmp)
-        i = i + 1
 
-    try:
-        targetSnowNLP = SnowNLP(targetList)
-    except:
-        text = '本問題不在資料庫中！ 請重新輸入問題！'
-        return text
+    
+    targetSnowNLP = SnowNLP(targetList)
     TargetSim = targetSnowNLP.sim(extractQuestion)
     
     if (max(TargetSim) > 5):
         score = max(TargetSim)
         text = '本次搜尋分數: ' + str(score) + '\n' + '\n' + '搜尋對應問題： \n' + targetQuestionList[TargetSim.index(max(TargetSim))] + '\n' + '\n' + '搜尋對應回答： \n' + targetAnswerList[TargetSim.index(max(TargetSim))]
     else:
-        text = '本次搜尋分數: ' + str(max(TargetSim)) + '\n' + '\n' + '搜尋不到相對應的結果！ 請重新輸入問題！'
-    return HanziConv.toTraditional(text)
+        text = '本次搜尋分數: ' + str(max(TargetSim)) + '\n' + '\n' + '本問題不在資料庫中！ 請重新輸入問題！'
+    return text
+
